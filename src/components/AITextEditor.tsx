@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -6,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles, Wand2, CheckCircle, RotateCcw, Copy, Download, Settings } from 'lucide-react';
+import { ColorPicker } from './ColorPicker';
+import { Sparkles, Wand2, CheckCircle, RotateCcw, Copy, Download, Settings, Palette, Type } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface AITextEditorProps {
@@ -22,6 +22,7 @@ export interface AITextEditorProps {
     toneAdjustment?: boolean;
     autoComplete?: boolean;
     summarization?: boolean;
+    colorCustomization?: boolean;
   };
 }
 
@@ -40,6 +41,7 @@ interface EnhancementMode {
   description: string;
   prompt: string;
   icon: React.ReactNode;
+  color: string;
 }
 
 const enhancementModes: EnhancementMode[] = [
@@ -48,21 +50,24 @@ const enhancementModes: EnhancementMode[] = [
     label: 'Professional',
     description: 'Make text more formal and business-appropriate',
     prompt: 'Rewrite this text to be more professional and formal while maintaining the core message:',
-    icon: <Wand2 className="w-4 h-4" />
+    icon: <Wand2 className="w-4 h-4" />,
+    color: 'bg-blue-500 hover:bg-blue-600'
   },
   {
     id: 'casual',
     label: 'Casual',
     description: 'Make text more conversational and friendly',
     prompt: 'Rewrite this text to be more casual and conversational while maintaining the core message:',
-    icon: <Sparkles className="w-4 h-4" />
+    icon: <Sparkles className="w-4 h-4" />,
+    color: 'bg-purple-500 hover:bg-purple-600'
   },
   {
     id: 'concise',
     label: 'Concise',
     description: 'Make text shorter and more direct',
     prompt: 'Rewrite this text to be more concise and direct while maintaining all key information:',
-    icon: <CheckCircle className="w-4 h-4" />
+    icon: <CheckCircle className="w-4 h-4" />,
+    color: 'bg-green-500 hover:bg-green-600'
   }
 ];
 
@@ -78,7 +83,8 @@ export function AITextEditor({
     grammarCheck: true,
     toneAdjustment: true,
     autoComplete: true,
-    summarization: true
+    summarization: true,
+    colorCustomization: true
   }
 }: AITextEditorProps) {
   const [text, setText] = useState(initialValue);
@@ -88,6 +94,9 @@ export function AITextEditor({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
+  const [textColor, setTextColor] = useState('#000000');
+  const [backgroundColor, setBackgroundColor] = useState('#ffffff');
+  const [fontSize, setFontSize] = useState(16);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
@@ -218,19 +227,63 @@ export function AITextEditor({
     setShowSuggestions(false);
   };
 
+  const adjustFontSize = (increment: number) => {
+    setFontSize(prev => Math.max(12, Math.min(24, prev + increment)));
+  };
+
   return (
-    <div className={cn("w-full max-w-4xl mx-auto bg-background border rounded-lg shadow-sm", className)}>
+    <div className={cn("w-full max-w-4xl mx-auto bg-background border rounded-lg shadow-lg overflow-hidden", className)}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary/5 to-purple-500/5">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-primary" />
-          <h3 className="font-semibold">AI Text Editor</h3>
-          <Badge variant="secondary" className="text-xs">
+          <div className="p-2 rounded-full bg-primary/10">
+            <Sparkles className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h3 className="font-semibold">AI Text Editor</h3>
+            <p className="text-xs text-muted-foreground">Enhanced with AI & Colors</p>
+          </div>
+          <Badge variant="secondary" className="text-xs bg-gradient-to-r from-blue-500/10 to-purple-500/10">
             Beta
           </Badge>
         </div>
         
         <div className="flex items-center gap-2">
+          {features.colorCustomization && (
+            <>
+              <ColorPicker
+                selectedColor={textColor}
+                onColorChange={setTextColor}
+                label="Text"
+              />
+              <ColorPicker
+                selectedColor={backgroundColor}
+                onColorChange={setBackgroundColor}
+                label="Background"
+              />
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => adjustFontSize(-2)}
+                  className="h-8 w-8 p-0"
+                >
+                  <Type className="w-3 h-3" />
+                </Button>
+                <span className="text-xs w-8 text-center">{fontSize}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => adjustFontSize(2)}
+                  className="h-8 w-8 p-0"
+                >
+                  <Type className="w-4 h-4" />
+                </Button>
+              </div>
+              <Separator orientation="vertical" className="h-6" />
+            </>
+          )}
+          
           <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="ghost" size="icon" onClick={copyToClipboard}>
@@ -261,7 +314,7 @@ export function AITextEditor({
       </div>
 
       {/* Enhancement Modes */}
-      <div className="p-4 border-b bg-muted/30">
+      <div className="p-4 border-b bg-gradient-to-r from-muted/30 to-muted/10">
         <div className="flex items-center gap-2 mb-3">
           <Settings className="w-4 h-4 text-muted-foreground" />
           <span className="text-sm font-medium text-muted-foreground">Enhancement Modes</span>
@@ -274,7 +327,10 @@ export function AITextEditor({
                 <Button
                   variant={selectedMode === mode.id ? "default" : "outline"}
                   size="sm"
-                  className="gap-2"
+                  className={cn(
+                    "gap-2 transition-all duration-200",
+                    selectedMode === mode.id ? `${mode.color} text-white` : "hover:scale-105"
+                  )}
                   onClick={() => {
                     setSelectedMode(mode.id);
                     enhanceText(mode.id);
@@ -302,21 +358,23 @@ export function AITextEditor({
           placeholder={placeholder}
           className={cn(
             "resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0",
-            "rounded-none p-4"
+            "rounded-none p-4 transition-colors duration-200"
           )}
           style={{ 
             minHeight, 
             maxHeight,
-            fontSize: '16px',
-            lineHeight: '1.6'
+            fontSize: `${fontSize}px`,
+            lineHeight: '1.6',
+            color: textColor,
+            backgroundColor: backgroundColor
           }}
         />
         
         {isProcessing && (
-          <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Sparkles className="w-4 h-4 animate-spin" />
-              <span className="text-sm">Enhancing text...</span>
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center">
+            <div className="flex items-center gap-2 text-muted-foreground bg-background p-4 rounded-lg shadow-lg">
+              <Sparkles className="w-4 h-4 animate-spin text-primary" />
+              <span className="text-sm">Enhancing text with AI...</span>
             </div>
           </div>
         )}
@@ -364,16 +422,21 @@ export function AITextEditor({
       )}
 
       {/* Footer Stats */}
-      <div className="flex items-center justify-between p-4 border-t bg-muted/30 text-sm text-muted-foreground">
+      <div className="flex items-center justify-between p-4 border-t bg-gradient-to-r from-muted/20 to-muted/5 text-sm text-muted-foreground">
         <div className="flex items-center gap-4">
-          <span>{wordCount} words</span>
+          <span className="font-medium">{wordCount} words</span>
           <Separator orientation="vertical" className="h-4" />
-          <span>{charCount} characters</span>
+          <span className="font-medium">{charCount} characters</span>
+          <Separator orientation="vertical" className="h-4" />
+          <span className="text-xs flex items-center gap-1">
+            <Palette className="w-3 h-3" />
+            Customizable
+          </span>
         </div>
         
         <div className="flex items-center gap-2">
           <span className="text-xs">Powered by AI</span>
-          <Sparkles className="w-3 h-3" />
+          <Sparkles className="w-3 h-3 text-primary" />
         </div>
       </div>
     </div>
