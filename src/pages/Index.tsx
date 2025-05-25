@@ -1,12 +1,8 @@
 
-import { AITextEditorDemo } from "@/components/AITextEditorDemo";
+import { HomePage } from "@/components/HomePage";
 
 const Index = () => {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-      <AITextEditorDemo />
-    </div>
-  );
+  return <HomePage />;
 };
 
 export default Index;
